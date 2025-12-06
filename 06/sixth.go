@@ -67,8 +67,9 @@ func part2(inStrings []string, operands []rune) int {
 		for _, line := range inStrings[:len(inStrings)-1] {
 			numbers = append(numbers, line[startIndex:splitIndexes[i]])
 		}
-		startIndex = splitIndexes[i]
+		startIndex = splitIndexes[i]+1
 		subTotal := 0
+		first := true
 		for k := 0; k < len(numbers[0]); k++ {
 			element := 0
 			for _, num := range numbers {
@@ -79,16 +80,20 @@ func part2(inStrings []string, operands []rune) int {
 					element += int ([]rune(num)[k] - '0')
 				}
 			}
-			fmt.Println("Element:", element)
-			if subTotal == 0 || operands[k] == '+' {
+			if operands[i] == '+' {
 				subTotal += element
-			} else if operands[k] == '*' {
-				subTotal *= element
-			}	
+			} else if operands[i] == '*' {
+				if subTotal == 0 && first{ 
+					subTotal += element
+				} else {
+					subTotal *= element
+				}
+			}
+			first = false
 		}
-		fmt.Println("SubTotal:", subTotal)
 		sum += subTotal
 	}
+	fmt.Println("Part 2:", sum)
 	return sum
 }
 
@@ -111,5 +116,4 @@ func main() {
 	}
 	_, operands := part1(inStrings)
 	part2(inStrings, operands)
-
 }
