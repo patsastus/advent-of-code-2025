@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"time"
 )
 
 func main() {
+	start := time.Now()
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: go run . <filename>")
 		os.Exit(1)
@@ -20,6 +22,7 @@ func main() {
 	scanner := bufio.NewScanner(file)
 	//partOne(scanner)
 	partTwo(scanner)
+	fmt.Println("Elapsed time:", time.Since(start))
 }
 
 func partOne(scanner *bufio.Scanner) {
