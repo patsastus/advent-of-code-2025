@@ -150,6 +150,11 @@ func partOne(scanner *bufio.Scanner, count int) int {
 }
 
 func partTwo(scanner *bufio.Scanner) int {
+	//---VISUALIZATION SETUP---
+	viz := NewVisualizer("circuits.mp4")
+	defer viz.Close()
+	var historyEdges []VizEdge
+	//---END VISUALIZATION SETUP---
 	circuits := make(map[*Junction][]*Junction)
 	var allJunctions []*Junction
 	id := 0
@@ -177,6 +182,7 @@ func partTwo(scanner *bufio.Scanner) int {
 	})
 	var joiner, joinee *Junction
 	for _, c := range connections {
+
 		if len(circuits) == 1 {
 			break
 		}
@@ -184,6 +190,22 @@ func partTwo(scanner *bufio.Scanner) int {
 			joinCircuits(c.from, c.to, &circuits)
 			joiner, joinee = c.from, c.to
 			fmt.Printf("Joining %v and %v at distance %v\n", c.from, c.to, c.distance)
+			//---VISUALIZATION FRAME---
+			historyEdges = append(historyEdges, VizEdge{
+				FromIndex: joiner.id,
+				ToIndex:   joinee.id,
+			})
+			framePoints := make([]VizPoint, len(allJunctions))
+			for j, n := range allJunctions {
+				framePoints[j] = VizPoint{
+					X:    float64(n.x),
+					Y:    float64(n.y),
+					Z:    float64(n.z),
+					Size: len(circuits[n.circuitHead]) + 1,
+				}
+			}
+			viz.AddFrame(framePoints, historyEdges, len(allJunctions))
+			//---END VISUALIZATION FRAME---
 		}
 	}
 	fmt.Printf("Final join %v to %v:\n", joiner, joinee)
