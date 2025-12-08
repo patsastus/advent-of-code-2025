@@ -3,8 +3,8 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"math"
 	"os"
+	"sort"
 	"strconv"
 	"time"
 )
@@ -26,35 +26,31 @@ func main() {
 	}
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
-	partOne(scanner, count)
-	partTwo(scanner)
+	if (count % 2) == 0 {
+		fmt.Println("boo")
+	}
+	//one := partOne(scanner, count)
+	//fmt.Println(one)
+	two := partTwo(scanner)
+	fmt.Println(two)
 	fmt.Println("Elapsed time:", time.Since(start))
 }
 
 type Junction struct {
-	x, y, z, id          int
-	nearest, circuitHead *Junction
-	distance             float64
+	x, y, z, id int
+	circuitHead *Junction
 }
 
-func calcNearest(circuits *map[*Junction][]*Junction) {
-	for junc1 := range *circuits {
-		distance := math.MaxFloat64
-		
-		for junc2 := range *circuits {
-			if junc1.id != junc2.id {
-				dx := junc1.x - junc2.x
-				dy := junc1.y - junc2.y
-				dz := junc1.z - junc2.z
-				d2 := float64(dx*dx + dy*dy + dz*dz)
-				if d2 < distance {
-					distance = d2
-					junc1.nearest = junc2
-					junc1.distance = d2
-				}
-			}
-		}
-	}
+type Connection struct {
+	from, to *Junction
+	distance float64
+}
+
+func dist(junc1, junc2 *Junction) float64 {
+	dx := junc1.x - junc2.x
+	dy := junc1.y - junc2.y
+	dz := junc1.z - junc2.z
+	return float64(dx*dx + dy*dy + dz*dz)
 }
 
 func onCircuit(junc1, junc2 *Junction, circuits *map[*Junction][]*Junction) bool {
@@ -83,6 +79,7 @@ func joinCircuits(junc1, junc2 *Junction, circuits *map[*Junction][]*Junction) {
 	(*circuits)[head1] = append((*circuits)[head1], head2)
 	(*circuits)[head1] = append((*circuits)[head1], (*circuits)[head2]...)
 	junc2.circuitHead = head1
+	head2.circuitHead = head1
 	for _, junc := range (*circuits)[head2] {
 		junc.circuitHead = head1
 	}
@@ -91,36 +88,104 @@ func joinCircuits(junc1, junc2 *Junction, circuits *map[*Junction][]*Junction) {
 
 func partOne(scanner *bufio.Scanner, count int) int {
 	circuits := make(map[*Junction][]*Junction)
+	var allJunctions []*Junction
 	id := 0
 	for scanner.Scan() {
 		line := scanner.Text()
 		newJunction := &Junction{}
-		fmt.Scanf(line, "%d,%d,%d", &newJunction.x, &newJunction.y, &newJunction.z)
+		fmt.Sscanf(line, "%d,%d,%d", &newJunction.x, &newJunction.y, &newJunction.z)
 		newJunction.id = id
 		newJunction.circuitHead = newJunction
 		id++
 		circuits[newJunction] = []*Junction{}
+		allJunctions = append(allJunctions, newJunction)
 	}
-	calcNearest(&circuits)
-	for i := 0; i < count; i++ {
-		// Find the shortest distance junction
-		minDistance := math.MaxFloat64
-		var candidate, nearest *Junction
-		for junc := range circuits {
-			if junc.distance < minDistance && !onCircuit(junc, junc.nearest, &circuits) {
-				minDistance = junc.distance
-				candidate = junc
-				nearest = junc.nearest
-			}
+	var connections []Connection
+	for i := 0; i < len(allJunctions); i++ {
+		for j := i + 1; j < len(allJunctions); j++ {
+			p1 := allJunctions[i]
+			p2 := allJunctions[j]
+			d := dist(p1, p2)
+			connections = append(connections, Connection{from: p1, to: p2, distance: d})
 		}
-		// Join the circuits
-		fmt.Printf("joining %v and %v\n", candidate, nearest)
-		joinCircuits(candidate, nearest, &circuits)
+	}
+	sort.Slice(connections, func(i, j int) bool {
+		return connections[i].distance < connections[j].distance
+	})
+	joins := 0
+	for _, c := range connections {
+		if joins >= count {
+			break
+		}
+		if c.from.circuitHead != c.to.circuitHead {
+			joinCircuits(c.from, c.to, &circuits)
+			fmt.Printf("Joining %v and %v at distance %v\n", c.from, c.to, c.distance)
+		}
+		joins++
+	}
+	fmt.Printf("Final %d circuits:\n", len(circuits))
+	fmt.Print(circuits)
+	keys := make([]*Junction, 0, len(circuits))
+	for k := range circuits {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		len1 := len(circuits[keys[i]])
+		len2 := len(circuits[keys[j]])
+		return len1 > len2
+	})
+	val1, val2, val3 := 0, 0, 0
+	if len(keys) > 0 {
+		val1 = len(circuits[keys[0]]) + 1
+	}
+	if len(keys) > 1 {
+		val2 = len(circuits[keys[1]]) + 1
+	}
+	if len(keys) > 2 {
+		val3 = len(circuits[keys[2]]) + 1
 	}
 
-	return 0
+	fmt.Printf("Top 3 sizes: %d, %d, %d\n", val1, val2, val3)
+	return val1 * val2 * val3
 }
 
 func partTwo(scanner *bufio.Scanner) int {
-	return 0
+	circuits := make(map[*Junction][]*Junction)
+	var allJunctions []*Junction
+	id := 0
+	for scanner.Scan() {
+		line := scanner.Text()
+		newJunction := &Junction{}
+		fmt.Sscanf(line, "%d,%d,%d", &newJunction.x, &newJunction.y, &newJunction.z)
+		newJunction.id = id
+		newJunction.circuitHead = newJunction
+		id++
+		circuits[newJunction] = []*Junction{}
+		allJunctions = append(allJunctions, newJunction)
+	}
+	var connections []Connection
+	for i := 0; i < len(allJunctions); i++ {
+		for j := i + 1; j < len(allJunctions); j++ {
+			p1 := allJunctions[i]
+			p2 := allJunctions[j]
+			d := dist(p1, p2)
+			connections = append(connections, Connection{from: p1, to: p2, distance: d})
+		}
+	}
+	sort.Slice(connections, func(i, j int) bool {
+		return connections[i].distance < connections[j].distance
+	})
+	var joiner, joinee *Junction
+	for _, c := range connections {
+		if len(circuits) == 1 {
+			break
+		}
+		if c.from.circuitHead != c.to.circuitHead {
+			joinCircuits(c.from, c.to, &circuits)
+			joiner, joinee = c.from, c.to
+			fmt.Printf("Joining %v and %v at distance %v\n", c.from, c.to, c.distance)
+		}
+	}
+	fmt.Printf("Final join %v to %v:\n", joiner, joinee)
+	return joiner.x * joinee.x
 }
