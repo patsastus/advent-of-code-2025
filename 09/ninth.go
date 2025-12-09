@@ -65,41 +65,53 @@ func partOne(scanner *bufio.Scanner) {
 }
 
 func partTwo(scanner *bufio.Scanner) {
+
 	redtiles := make([]Tile, 0)
-	greentiles := make(map[Tile]bool)
 	for scanner.Scan() {
 		line := scanner.Text()
 		t := Tile{}
 		fmt.Sscanf(line, "%d,%d", &t.x, &t.y)
 		redtiles = append(redtiles, t)
-		if len(redtiles) > 1 {
-			prev := redtiles[len(redtiles)-2]
-			if t.x == prev.x {
-				for y := min(t.y, prev.y) + 1; y < max(t.y, prev.y); y++ {
-					greentiles[Tile{t.x, y}] = true
-				}
-			} else if t.y == prev.y {
-				for x := min(t.x, prev.x) + 1; x < max(t.x, prev.x); x++ {
-					greentiles[Tile{x, t.y}] = true
-				}
-			}
-		}
 	}
-	fillGreenTiles(&redtiles, &greentiles)
-	biggest := 0.0
+	edges := makeEdges(&redtiles)
+	biggest := 0
 	corners := make([]Tile, 2)
-	for t1 := range redtiles {
-		for t2 := range redtiles {
+	//---visualizer---
+	viz := NewVisualizer("day09.mp4", &edges, &redtiles)
+	defer viz.Close()
+	pairsChecked := 0
+	renderMod := 100
+	//---visualizer end---
+	fmt.Println("starting to loop through candidate squares")
+	for _, t1 := range redtiles {
+		for _, t2 := range redtiles {
+
 			if t1 == t2 {
 				continue
 			}
-			dx := math.Abs(float64(t1.x-t2.x)) + 1
-			dy := math.Abs(float64(t1.y-t2.y)) + 1
+			dx := abs(t1.x-t2.x) + 1
+			dy := abs(t1.y-t2.y) + 1
 			square := dx * dy
 			if square > biggest {
-				corners[0] = t1
-				corners[1] = t2
-				biggest = square
+				pairsChecked++
+				if isLegal(t1, t2, &edges) {
+					corners[0] = t1
+					corners[1] = t2
+					biggest = square
+					//---visualizer---
+					for k := 0; k < 30; k++ {
+						viz.AddFrame(t1, t2, corners[0], corners[1], true, biggest)
+					}
+					//---visualizer end---
+					fmt.Println(time.Now(), "New biggest:", biggest, "Corners:", corners[0], corners[1])
+				} else {
+					//---visualizer---
+					if pairsChecked%renderMod == 0 {
+						viz.AddFrame(t1, t2, corners[0], corners[1], false, biggest)
+					}
+					//---visualizer end---
+				}
+
 			}
 		}
 	}
@@ -107,7 +119,71 @@ func partTwo(scanner *bufio.Scanner) {
 	fmt.Println("Corners:", corners[0], corners[1])
 }
 
-func fillGreenTiles(redtiles *[]Tile, greentiles *map[Tile]bool) {
+func isLegal(t1, t2 Tile, edges *[]Edge) bool {
+	//normalize corners, so rx1, ry1 is bottom-left, rx2, ry2 is top-right
+	rx1, rx2 := t1.x, t2.x
+	if rx1 > rx2 {
+		rx1, rx2 = rx2, rx1
+	}
+	ry1, ry2 := t1.y, t2.y
+	if ry1 > ry2 {
+		ry1, ry2 = ry2, ry1
+	}
+	for x := rx1; x <= rx2; x++ { // iterate over the range of x values covered by the square
+		onVerticalEdge := false
+		for _, edge := range *edges { // vertical edge check
+			if edge.start.x == edge.end.x && edge.start.x == x {
+				yMin, yMax := edge.start.y, edge.end.y
+				if yMin > yMax {
+					yMin, yMax = yMax, yMin
+				}
+				if ry1 >= yMin && ry2 <= yMax {
+					onVerticalEdge = true
+					break
+				}
+			}
+		}
+		if onVerticalEdge {
+			continue // This column is valid, move to next x
+		}
+		// horizontal edge intersection check
+		intersections := make([]int, 0)
+		for _, edge := range *edges {
+			if edge.start.y != edge.end.y { //skip the ones we already checked
+				continue
+			}
+			ex1, ex2 := edge.start.x, edge.end.x
+			if ex1 > ex2 {
+				ex1, ex2 = ex2, ex1
+			}
+			if x >= ex1 && x < ex2 {
+				intersections = append(intersections, edge.start.y)
+			}
+		}
+		sort.Ints(intersections)
+		columnValid := false
+		for i := 0; i < len(intersections)-1; i += 2 {
+			yBot := intersections[i]
+			yTop := intersections[i+1]
+			if ry1 >= yBot && ry2 <= yTop {
+				columnValid = true
+				break
+			}
+		}
+		if !columnValid {
+			return false //stop at invalid column
+		}
+	}
+	return true // all columns are valid
+}
+
+func abs(a int) int {
+	if a < 0 {
+		return -a
+	}
+	return a
+}
+func makeEdges(redtiles *[]Tile) []Edge {
 	edges := make([]Edge, 0)
 	previousCorner := (*redtiles)[len(*redtiles)-1]
 	minX, maxX := previousCorner.x, previousCorner.x
@@ -127,28 +203,5 @@ func fillGreenTiles(redtiles *[]Tile, greentiles *map[Tile]bool) {
 		}
 		return edges[i].start.y < edges[j].start.y
 	})
-	for x := minX; x <= maxX; x++ { // iterate over the range of x values covered by the edges
-		intersections := make([]int, 0) //at this x, what y values do we intersect with edges
-		for _, edge := range edges {
-			x1, x2 := edge.start.x, edge.end.x
-			if x1 == x2 {
-				continue
-			} // vertical edge, skip it
-			if x1 > x2 {
-				x1, x2 = x2, x1
-			} // swap if necessary
-			if x >= x1 && x <= x2 {
-				intersections = append(intersections, edge.start.y)
-			}
-		}
-		sort.Ints(intersections)
-		for i := 0; i < len(intersections)-1; i += 2 { //every other range is filled
-			yStart := intersections[i]
-			yEnd := intersections[i+1]
-			for y := yStart; y <= yEnd; y++ {
-				(*greentiles)[Tile{x, y}] = true
-			}
-		}
-	}
-
+	return edges
 }
