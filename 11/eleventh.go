@@ -46,9 +46,10 @@ func partOne(scanner *bufio.Scanner) {
 		num += countPaths(conns, connections, visited)
 	}
 	fmt.Println("Total paths from 'you' to 'out':", num)
+	generateGraphviz(connections)
 	subPathDefs := [][]string{
-		{"srv", "fft", "dac"},
-		{"srv", "dac", "fft"},
+		{"svr", "fft", "dac"},
+		{"svr", "dac", "fft"},
 		{"dac", "fft", ""},
 		{"fft", "dac", ""},
 		{"fft", "out", "dac"},
@@ -65,9 +66,9 @@ func partOne(scanner *bufio.Scanner) {
 				continue
 			}
 			path := []string{}
-			visited := make(map[string]bool)
+			memo := make(map[string]int)
 			path = append(path, startNode)
-			numPaths[i] += countPathsWithout(conns, connections, &path, visited, endNode, forbiddenNode)
+			numPaths[i] += countPathsMemo(conns, connections, &path, memo, endNode, forbiddenNode)
 		}
 		fmt.Println("Finished subpath ", subPathDef)
 	}
@@ -76,6 +77,25 @@ func partOne(scanner *bufio.Scanner) {
 	}
 	fmt.Printf("Total paths : %d\n", numPaths[0]*numPaths[3]*numPaths[5]+numPaths[1]*numPaths[2]*numPaths[4])
 }
+
+func countPathsMemo(node string, connections map[string][]string, pathSoFar *[]string, memo map[string]int, target, forbidden string) int {
+	if val, ok := memo[node]; ok{
+		return val
+	}
+	*pathSoFar = append(*pathSoFar, node)
+	defer func () {
+		*pathSoFar = (*pathSoFar)[:len(*pathSoFar)-1]
+	}()
+	if node == target {return 1}
+	if node == forbidden {return 0}
+	count := 0
+	for _, conn := range connections[node] {
+		count += countPathsMemo(conn, connections, pathSoFar, memo, target, forbidden)
+	}
+	memo[node] = count
+	return count
+}
+
 
 func countPathsWithout(node string, connections map[string][]string, pathSoFar *[]string, visited map[string]bool, target, forbidden string) int {
 	count := 0
@@ -110,4 +130,39 @@ func countPaths(node string, connections map[string][]string, visited map[string
 		count += countPaths(conn, connections, visited)
 	}
 	return count
+}
+
+func generateGraphviz(connections map[string][]string) {
+    f, err := os.Create("graph.dot")
+    if err != nil { panic(err) }
+    defer f.Close()
+
+    w := bufio.NewWriter(f)
+    w.WriteString("strict graph {\n")
+    w.WriteString("  layout=neato\n") 
+    w.WriteString("  overlap=false\n") 
+    w.WriteString("  node [shape=circle, style=filled, color=lightblue];\n")
+
+    // Highlight your critical nodes
+    specialNodes := []string{"srv", "fft", "dac", "out", "you"}
+    for _, n := range specialNodes {
+        w.WriteString(fmt.Sprintf("  %s [fillcolor=red, shape=doublecircle];\n", n))
+    }
+
+    seen := make(map[string]bool)
+    for src, targets := range connections {
+        for _, dst := range targets {
+            // Sort to avoid duplicate edges A--B and B--A
+            a, b := src, dst
+            if a > b { a, b = b, a }
+            edgeKey := a + "-" + b
+            if !seen[edgeKey] {
+                w.WriteString(fmt.Sprintf("  %s -- %s;\n", src, dst))
+                seen[edgeKey] = true
+            }
+        }
+    }
+    w.WriteString("}\n")
+    w.Flush()
+    fmt.Println("Wrote graph.dot")
 }
