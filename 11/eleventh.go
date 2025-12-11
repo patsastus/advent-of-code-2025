@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"slices"
 	"strings"
 	"time"
 	//	"math"
@@ -60,16 +59,17 @@ func partOne(scanner *bufio.Scanner) {
 		startNode := subPathDef[0]
 		endNode := subPathDef[1]
 		forbiddenNode := subPathDef[2]
-		path := []string{}
-		path = append(path, startNode)
+
 		for _, conns := range connections[startNode] {
 			if conns == endNode {
 				continue
 			}
-			copied := make([]string, len(path))
-			copy(copied, path)
-			numPaths[i] += countPathsWithout(conns, connections, copied, endNode, forbiddenNode)
+			path := []string{}
+			visited := make(map[string]bool)
+			path = append(path, startNode)
+			numPaths[i] += countPathsWithout(conns, connections, &path, visited, endNode, forbiddenNode)
 		}
+		fmt.Println("Finished subpath ", subPathDef)
 	}
 	for i, np := range numPaths {
 		fmt.Printf("Paths from %s to %s without %s: %d\n", subPathDefs[i][0], subPathDefs[i][1], subPathDefs[i][2], np)
@@ -77,39 +77,23 @@ func partOne(scanner *bufio.Scanner) {
 	fmt.Printf("Total paths : %d\n", numPaths[0]*numPaths[3]*numPaths[5]+numPaths[1]*numPaths[2]*numPaths[4])
 }
 
-func countPathsWith(node string, connections map[string][]string, visited []string) int {
+func countPathsWithout(node string, connections map[string][]string, pathSoFar *[]string, visited map[string]bool, target, forbidden string) int {
 	count := 0
-	visited = append(visited, node)
+	*pathSoFar = append(*pathSoFar, node)
+	visited[node] = true
+	defer func() { //undo these changes on return
+		delete(visited, node)
+		*pathSoFar = (*pathSoFar)[:len(*pathSoFar)-1]
+	}()
 	for _, conn := range connections[node] {
-		if conn == "out" {
-			if slices.Contains(visited, "dac") && slices.Contains(visited, "fft") {
-				count++
-			}
-			//	fmt.Printf("found path via %v\n", visited)
-			continue
-		}
-		copied := make([]string, len(visited))
-		copy(copied, visited)
-		count += countPathsWith(conn, connections, copied)
-	}
-	return count
-}
-
-func countPathsWithout(node string, connections map[string][]string, visited []string, target, forbidden string) int {
-	count := 0
-	visited = append(visited, node)
-	for _, conn := range connections[node] {
-		if conn == forbidden {
+		if conn == forbidden || visited[conn] {
 			continue
 		}
 		if conn == target {
 			count++
-			//	fmt.Printf("found path via %v\n", visited)
 			continue
 		}
-		copied := make([]string, len(visited))
-		copy(copied, visited)
-		count += countPathsWith(conn, connections, copied)
+		count += countPathsWithout(conn, connections, pathSoFar, visited, target, forbidden)
 	}
 	return count
 }
