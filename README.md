@@ -23,6 +23,12 @@ For days 8 and 9 I made video visualizers to try to better wrap my head around w
 
 ### Day 8: connecting 3D dots to the closest neighbor
 
+https://github.com/user-attachments/assets/195dda3e-e88b-43a9-a978-4dbe9e55e50f
+
 ### Day 9: Find the largest square that doesn't cross a line
 
-### Day 11: DAG
+https://github.com/user-attachments/assets/1956f028-c6a6-45aa-ade4-c8f57b963b67
+
+### Day 11: DAG visualization
+
+![Puzzle Graph](graph.svg)
