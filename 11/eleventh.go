@@ -138,31 +138,37 @@ func generateGraphviz(connections map[string][]string) {
     defer f.Close()
 
     w := bufio.NewWriter(f)
-    w.WriteString("strict graph {\n")
-    w.WriteString("  layout=neato\n") 
-    w.WriteString("  overlap=false\n") 
+    w.WriteString("strict digraph {\n")
+    
+    w.WriteString("  layout=fdp\n")
+    w.WriteString("  overlap=true\n")
+    w.WriteString("  splines=false\n")
     w.WriteString("  node [shape=circle, style=filled, color=lightblue];\n")
 
-    // Highlight your critical nodes
-    specialNodes := []string{"srv", "fft", "dac", "out", "you"}
-    for _, n := range specialNodes {
-        w.WriteString(fmt.Sprintf("  %s [fillcolor=red, shape=doublecircle];\n", n))
-    }
+    w.WriteString("  svr [pos=\"0,50!\", fillcolor=green, shape=doublecircle];\n")
+    
+    w.WriteString("  fft [pos=\"50,100!\", fillcolor=yellow, shape=doublecircle];\n")
+    
+    w.WriteString("  dac [pos=\"50,0!\", fillcolor=orange, shape=doublecircle];\n")
+    
+    w.WriteString("  out [pos=\"100,50!\", fillcolor=red, shape=doublecircle];\n")
 
     seen := make(map[string]bool)
     for src, targets := range connections {
         for _, dst := range targets {
-            // Sort to avoid duplicate edges A--B and B--A
+            // Edge deduplication logic
             a, b := src, dst
             if a > b { a, b = b, a }
             edgeKey := a + "-" + b
+            
             if !seen[edgeKey] {
-                w.WriteString(fmt.Sprintf("  %s -- %s;\n", src, dst))
+                      w.WriteString(fmt.Sprintf("  %s -> %s;\n", src, dst))
                 seen[edgeKey] = true
             }
         }
     }
     w.WriteString("}\n")
     w.Flush()
-    fmt.Println("Wrote graph.dot")
+    fmt.Println("Generated graph.dot with pinned nodes.")
 }
+
