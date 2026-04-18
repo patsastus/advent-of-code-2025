@@ -6,20 +6,19 @@ import (
 	"os"
 	"strings"
 	"time"
-	//	"math"
-	//	"sort"
 )
 
 func main() {
 	start := time.Now()
+	var filename string
 	if len(os.Args) < 2 {
-		fmt.Println("Usage: go run . <filename>")
-		os.Exit(1)
+		filename = "input"
+	} else {
+		filename = os.Args[1]
 	}
-	filename := os.Args[1]
 	file, err := os.Open(filename)
 	if err != nil {
-		panic("")
+		panic("error opening file")
 	}
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
@@ -70,10 +69,6 @@ func partOne(scanner *bufio.Scanner) {
 			path = append(path, startNode)
 			numPaths[i] += countPathsMemo(conns, connections, &path, memo, endNode, forbiddenNode)
 		}
-		fmt.Println("Finished subpath ", subPathDef)
-	}
-	for i, np := range numPaths {
-		fmt.Printf("Paths from %s to %s without %s: %d\n", subPathDefs[i][0], subPathDefs[i][1], subPathDefs[i][2], np)
 	}
 	fmt.Printf("Total paths : %d\n", numPaths[0]*numPaths[3]*numPaths[5]+numPaths[1]*numPaths[2]*numPaths[4])
 }

@@ -19,19 +19,26 @@ type Edge struct {
 
 func main() {
 	start := time.Now()
+	var filename string
 	if len(os.Args) < 2 {
-		fmt.Println("Usage: go run . <filename>")
-		os.Exit(1)
+		filename = "input"
+	} else {
+		filename = os.Args[1]
 	}
-	filename := os.Args[1]
 	file, err := os.Open(filename)
 	if err != nil {
-		panic("")
+		panic("error opening file")
 	}
-	defer file.Close()
 	scanner := bufio.NewScanner(file)
-	//partOne(scanner)
+	partOne(scanner)
+	file.Close()
+	file, err = os.Open(filename)
+	if err != nil {
+		panic("error opening file")
+	}
+	scanner = bufio.NewScanner(file)
 	partTwo(scanner)
+	file.Close()
 	fmt.Println("Elapsed time:", time.Since(start))
 }
 
@@ -60,8 +67,8 @@ func partOne(scanner *bufio.Scanner) {
 			}
 		}
 	}
-	fmt.Printf("Area: %d", int(biggest))
-	fmt.Println("Corners:", corners[0], corners[1])
+	//fmt.Printf("Area: %d", int(biggest))
+	//fmt.Println("Corners:", corners[0], corners[1])
 }
 
 func partTwo(scanner *bufio.Scanner) {
@@ -82,7 +89,7 @@ func partTwo(scanner *bufio.Scanner) {
 	pairsChecked := 0
 	renderMod := 100
 	//---visualizer end---
-	fmt.Println("starting to loop through candidate squares")
+	//fmt.Println("starting to loop through candidate squares")
 	for _, t1 := range redtiles {
 		for _, t2 := range redtiles {
 
@@ -103,7 +110,7 @@ func partTwo(scanner *bufio.Scanner) {
 						viz.AddFrame(t1, t2, corners[0], corners[1], true, biggest)
 					}
 					//---visualizer end---
-					fmt.Println(time.Now(), "New biggest:", biggest, "Corners:", corners[0], corners[1])
+					//fmt.Println(time.Now(), "New biggest:", biggest, "Corners:", corners[0], corners[1])
 				} else {
 					//---visualizer---
 					if pairsChecked%renderMod == 0 {
@@ -116,7 +123,7 @@ func partTwo(scanner *bufio.Scanner) {
 		}
 	}
 	fmt.Printf("Area: %d", int(biggest))
-	fmt.Println("Corners:", corners[0], corners[1])
+	//fmt.Println("Corners:", corners[0], corners[1])
 }
 
 func isLegal(t1, t2 Tile, edges *[]Edge) bool {

@@ -8,14 +8,15 @@ import (
 )
 
 func main() {
+	var filename string
 	if len(os.Args) < 2 {
-		fmt.Println("Usage: go run . <filename>")
-		os.Exit(1)
+		filename = "input"
+	} else {
+		filename = os.Args[1]
 	}
-	filename := os.Args[1]
 	file, err := os.Open(filename)
 	if err != nil {
-		panic("")
+		panic("error opening file")
 	}
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
@@ -51,9 +52,7 @@ func main() {
 	sort.Slice(in, func(i, j int) bool {
 		return in[i][0] < in[j][0]
 	})
-	fmt.Println(in)
 	collapsed := collapseRanges(in)
-	fmt.Print(collapsed)
 	fmt.Println(sumRanges(collapsed))
 }
 

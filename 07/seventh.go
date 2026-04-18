@@ -9,18 +9,25 @@ import (
 
 func main() {
 	start := time.Now()
+	var filename string
 	if len(os.Args) < 2 {
-		fmt.Println("Usage: go run . <filename>")
-		os.Exit(1)
+		filename = "input"
+	} else {
+		filename = os.Args[1]
 	}
-	filename := os.Args[1]
 	file, err := os.Open(filename)
 	if err != nil {
-		panic("")
+		panic("error opening file")
+	}
+	scanner := bufio.NewScanner(file)
+	partOne(scanner)
+	file.Close()
+	file, err = os.Open(filename)
+	if err != nil {
+		panic("error opening file")
 	}
 	defer file.Close()
-	scanner := bufio.NewScanner(file)
-	//partOne(scanner)
+	scanner = bufio.NewScanner(file)
 	partTwo(scanner)
 	fmt.Println("Elapsed time:", time.Since(start))
 }
@@ -28,10 +35,8 @@ func main() {
 func partOne(scanner *bufio.Scanner) {
 	count := 0
 	previousLine := []rune(scanner.Text())
-	//fmt.Println(string(previousLine))
 	for scanner.Scan() {
 		line := []rune(scanner.Text())
-		//		fmt.Println(string(line))
 		for i := 0; i < len(previousLine); i++ {
 			if previousLine[i] == 'S' || previousLine[i] == '|' {
 				if line[i] == '.' {
@@ -51,11 +56,10 @@ func partOne(scanner *bufio.Scanner) {
 		previousLine = line
 	}
 	fmt.Println(count)
-	fmt.Println(string(previousLine))
+	// fmt.Println(string(previousLine))
 }
 
 func lineToPathCount(line []rune) []int {
-
 	path := make([]int, len(line))
 	for i := 0; i < len(line); i++ {
 		switch line[i] {
@@ -67,9 +71,9 @@ func lineToPathCount(line []rune) []int {
 			path[i] = 0
 		}
 	}
-	//	fmt.Println(path)
 	return path
 }
+
 func partTwo(scanner *bufio.Scanner) {
 	count := 1
 	scanner.Scan()
@@ -92,7 +96,6 @@ func partTwo(scanner *bufio.Scanner) {
 		}
 		previousLine = line
 		previousPaths = path
-		//		fmt.Printf("%v\n", path)
 		count++
 	}
 	sum := 0

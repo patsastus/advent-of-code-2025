@@ -11,26 +11,33 @@ import (
 
 func main() {
 	start := time.Now()
+	var filename string
+	var count int
 	if len(os.Args) < 3 {
-		fmt.Println("Usage: go run . <filename> <count>")
-		os.Exit(1)
-	}
-	filename := os.Args[1]
-	count, err := strconv.Atoi(os.Args[2])
-	if err != nil {
-		panic("")
+		filename = "input"
+		count = 1000
+	} else {
+		filename = os.Args[1]
+		temp, err := strconv.Atoi(os.Args[2])
+		if err != nil {
+			panic("error reading count from args")
+		}
+		count = temp
 	}
 	file, err := os.Open(filename)
 	if err != nil {
-		panic("")
+		panic("error opening file")
+	}
+	scanner := bufio.NewScanner(file)
+	one := partOne(scanner, count)
+	fmt.Println(one)
+	file.Close()
+	file, err = os.Open(filename)
+	if err != nil {
+		panic("error opening file")
 	}
 	defer file.Close()
-	scanner := bufio.NewScanner(file)
-	if (count % 2) == 0 {
-		fmt.Println("boo")
-	}
-	//one := partOne(scanner, count)
-	//fmt.Println(one)
+	scanner = bufio.NewScanner(file)
 	two := partTwo(scanner)
 	fmt.Println(two)
 	fmt.Println("Elapsed time:", time.Since(start))
@@ -119,12 +126,12 @@ func partOne(scanner *bufio.Scanner, count int) int {
 		}
 		if c.from.circuitHead != c.to.circuitHead {
 			joinCircuits(c.from, c.to, &circuits)
-			fmt.Printf("Joining %v and %v at distance %v\n", c.from, c.to, c.distance)
+			//	fmt.Printf("Joining %v and %v at distance %v\n", c.from, c.to, c.distance)
 		}
 		joins++
 	}
-	fmt.Printf("Final %d circuits:\n", len(circuits))
-	fmt.Print(circuits)
+	//fmt.Printf("Final %d circuits:\n", len(circuits))
+	//fmt.Print(circuits)
 	keys := make([]*Junction, 0, len(circuits))
 	for k := range circuits {
 		keys = append(keys, k)
@@ -144,8 +151,7 @@ func partOne(scanner *bufio.Scanner, count int) int {
 	if len(keys) > 2 {
 		val3 = len(circuits[keys[2]]) + 1
 	}
-
-	fmt.Printf("Top 3 sizes: %d, %d, %d\n", val1, val2, val3)
+	//	fmt.Printf("Top 3 sizes: %d, %d, %d\n", val1, val2, val3)
 	return val1 * val2 * val3
 }
 
@@ -189,7 +195,7 @@ func partTwo(scanner *bufio.Scanner) int {
 		if c.from.circuitHead != c.to.circuitHead {
 			joinCircuits(c.from, c.to, &circuits)
 			joiner, joinee = c.from, c.to
-			fmt.Printf("Joining %v and %v at distance %v\n", c.from, c.to, c.distance)
+			//fmt.Printf("Joining %v and %v at distance %v\n", c.from, c.to, c.distance)
 			//---VISUALIZATION FRAME---
 			historyEdges = append(historyEdges, VizEdge{
 				FromIndex: joiner.id,
@@ -208,6 +214,6 @@ func partTwo(scanner *bufio.Scanner) int {
 			//---END VISUALIZATION FRAME---
 		}
 	}
-	fmt.Printf("Final join %v to %v:\n", joiner, joinee)
+	//fmt.Printf("Final join %v to %v:\n", joiner, joinee)
 	return joiner.x * joinee.x
 }

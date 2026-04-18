@@ -55,8 +55,8 @@ func part2(inStrings []string, operands []rune) int {
 		}
 		if allSpaces {
 			splitIndexes[index] = i
-			index++	
-		} 
+			index++
+		}
 	}
 	splitIndexes[index] = len(inStrings[0])
 	index++
@@ -67,7 +67,7 @@ func part2(inStrings []string, operands []rune) int {
 		for _, line := range inStrings[:len(inStrings)-1] {
 			numbers = append(numbers, line[startIndex:splitIndexes[i]])
 		}
-		startIndex = splitIndexes[i]+1
+		startIndex = splitIndexes[i] + 1
 		subTotal := 0
 		first := true
 		for k := 0; k < len(numbers[0]); k++ {
@@ -77,13 +77,13 @@ func part2(inStrings []string, operands []rune) int {
 					continue
 				} else {
 					element *= 10
-					element += int ([]rune(num)[k] - '0')
+					element += int([]rune(num)[k] - '0')
 				}
 			}
 			if operands[i] == '+' {
 				subTotal += element
 			} else if operands[i] == '*' {
-				if subTotal == 0 && first{ 
+				if subTotal == 0 && first {
 					subTotal += element
 				} else {
 					subTotal *= element
@@ -98,14 +98,15 @@ func part2(inStrings []string, operands []rune) int {
 }
 
 func main() {
+	var filename string
 	if len(os.Args) < 2 {
-		fmt.Println("Usage: go run . <filename>")
-		os.Exit(1)
+		filename = "input"
+	} else {
+		filename = os.Args[1]
 	}
-	filename := os.Args[1]
 	file, err := os.Open(filename)
 	if err != nil {
-		panic("")
+		panic("error opening file")
 	}
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
