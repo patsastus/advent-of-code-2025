@@ -12,4 +12,4 @@ go run .
 ```
 
 ## Extra visuals
-For days 8 and 9 I made some extra visualizers to try to better wrap my head around what was happening in the algorithm I wrote, I've added the visuals created here (Any ones you generate will differ in detail because of different input)
+For days 8 and 9 I made video visualizers to try to better wrap my head around what was happening in the algorithm I wrote, And for day 11 I made a graph visualization of the input data. I've added the visuals created here (Any ones you generate will differ slightly in detail because of different input)
