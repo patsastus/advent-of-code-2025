@@ -46,9 +46,10 @@ func partOne(scanner *bufio.Scanner) {
 		num += countPaths(conns, connections, visited)
 	}
 	fmt.Println("Total paths from 'you' to 'out':", num)
+	generateGraphviz(connections)
 	subPathDefs := [][]string{
-		{"srv", "fft", "dac"},
-		{"srv", "dac", "fft"},
+		{"svr", "fft", "dac"},
+		{"svr", "dac", "fft"},
 		{"dac", "fft", ""},
 		{"fft", "dac", ""},
 		{"fft", "out", "dac"},
@@ -65,9 +66,9 @@ func partOne(scanner *bufio.Scanner) {
 				continue
 			}
 			path := []string{}
-			visited := make(map[string]bool)
+			memo := make(map[string]int)
 			path = append(path, startNode)
-			numPaths[i] += countPathsWithout(conns, connections, &path, visited, endNode, forbiddenNode)
+			numPaths[i] += countPathsMemo(conns, connections, &path, memo, endNode, forbiddenNode)
 		}
 		fmt.Println("Finished subpath ", subPathDef)
 	}
@@ -76,6 +77,25 @@ func partOne(scanner *bufio.Scanner) {
 	}
 	fmt.Printf("Total paths : %d\n", numPaths[0]*numPaths[3]*numPaths[5]+numPaths[1]*numPaths[2]*numPaths[4])
 }
+
+func countPathsMemo(node string, connections map[string][]string, pathSoFar *[]string, memo map[string]int, target, forbidden string) int {
+	if val, ok := memo[node]; ok{
+		return val
+	}
+	*pathSoFar = append(*pathSoFar, node)
+	defer func () {
+		*pathSoFar = (*pathSoFar)[:len(*pathSoFar)-1]
+	}()
+	if node == target {return 1}
+	if node == forbidden {return 0}
+	count := 0
+	for _, conn := range connections[node] {
+		count += countPathsMemo(conn, connections, pathSoFar, memo, target, forbidden)
+	}
+	memo[node] = count
+	return count
+}
+
 
 func countPathsWithout(node string, connections map[string][]string, pathSoFar *[]string, visited map[string]bool, target, forbidden string) int {
 	count := 0
@@ -111,3 +131,44 @@ func countPaths(node string, connections map[string][]string, visited map[string
 	}
 	return count
 }
+
+func generateGraphviz(connections map[string][]string) {
+    f, err := os.Create("graph.dot")
+    if err != nil { panic(err) }
+    defer f.Close()
+
+    w := bufio.NewWriter(f)
+    w.WriteString("strict digraph {\n")
+    
+    w.WriteString("  layout=fdp\n")
+    w.WriteString("  overlap=true\n")
+    w.WriteString("  splines=false\n")
+    w.WriteString("  node [shape=circle, style=filled, color=lightblue];\n")
+
+    w.WriteString("  svr [pos=\"0,50!\", fillcolor=green, shape=doublecircle];\n")
+    
+    w.WriteString("  fft [pos=\"50,100!\", fillcolor=yellow, shape=doublecircle];\n")
+    
+    w.WriteString("  dac [pos=\"50,0!\", fillcolor=orange, shape=doublecircle];\n")
+    
+    w.WriteString("  out [pos=\"100,50!\", fillcolor=red, shape=doublecircle];\n")
+
+    seen := make(map[string]bool)
+    for src, targets := range connections {
+        for _, dst := range targets {
+            // Edge deduplication logic
+            a, b := src, dst
+            if a > b { a, b = b, a }
+            edgeKey := a + "-" + b
+            
+            if !seen[edgeKey] {
+                      w.WriteString(fmt.Sprintf("  %s -> %s;\n", src, dst))
+                seen[edgeKey] = true
+            }
+        }
+    }
+    w.WriteString("}\n")
+    w.Flush()
+    fmt.Println("Generated graph.dot with pinned nodes.")
+}
+
