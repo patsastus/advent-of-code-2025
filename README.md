@@ -22,13 +22,16 @@ will then output the answers to the two puzzles, which you can check on the webs
 For days 8 and 9 I made video visualizers to try to better wrap my head around what was happening in the algorithm I wrote, and for day 11 I made a graph visualization of the input data. I've added the visuals created here (Any ones you generate will differ slightly in detail because of different input)
 
 ### Day 8: connecting 3D dots to the closest neighbor
+The goal here was to connect dots into networks, always adding the shortest distance between two unconnected networks. The colors of the nodes represent the log of the size of the network: initially all start as green, representing a size of 1, and gradually move towards red, with fully red representing the fully connected network. Apologies to any colorblind people, but I was in a Christmas spirit making this.
 
 https://github.com/user-attachments/assets/195dda3e-e88b-43a9-a978-4dbe9e55e50f
 
 ### Day 9: Find the largest square that doesn't cross a line
+The goal here was to find the pair of 2D-points in the dataset, that act as the opposite corners of a rectangle, so none of the sides of the rectangle cross the edges defined in the dataset. I ended up just brute-force checking every pair; in the visualization, there's a strongly outlined current largest square, and every so often a transparent yellow square is drawn to represent a check being made (drawing every check would have resulted in a very long and boring visual). When a new best candidate is found it flashes and holds for a second to highlight)
 
 https://github.com/user-attachments/assets/1956f028-c6a6-45aa-ade4-c8f57b963b67
 
 ### Day 11: DAG visualization
+This is a graphviz visualization of the network I got as input, the stated goal was to start at `svr` (far left), go via `fft` (top) and `dac` (bottom) in some order, and end at `out` (far right). The tangled ball of yarn in the middle really helped me understand why I needed to add memoization to not be stuck doing path checks until the end of the universe.  
 
 ![Puzzle Graph](graph.svg)
